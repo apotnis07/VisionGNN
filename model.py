@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from utility import SimplePatchifier, TwoLayerNN
+from utility import SimplePatchifier, TwoLayerNN, WeightedPatchifier
 
 
 class ViGBlock(nn.Module):
@@ -48,11 +48,12 @@ class ViGBlock(nn.Module):
 
 
 class VGNN(nn.Module):
-    def __init__(self, in_features=4*16*16, out_feature=320, num_patches=196,
+    def __init__(self, in_features=3*16*16, out_feature=320, num_patches=196,
                  num_ViGBlocks=16, num_edges=9, head_num=1):
         super().__init__()
 
-        self.patchifier = SimplePatchifier()
+        # self.patchifier = SimplePatchifier()
+        self.patchifier = WeightedPatchifier()
         # self.patch_embedding = TwoLayerNN(in_features)
         self.patch_embedding = nn.Sequential(
             nn.Linear(in_features, out_feature//2),
@@ -121,7 +122,7 @@ class VGNN(nn.Module):
 
 
 class Classifier(nn.Module):
-    def __init__(self, in_features=4*16*16, out_feature=320,
+    def __init__(self, in_features=3*16*16, out_feature=320,
                  num_patches=196, num_ViGBlocks=16, hidden_layer=1024,
                  num_edges=9, head_num=1, n_classes=10):
         super().__init__()
