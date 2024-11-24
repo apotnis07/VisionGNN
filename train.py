@@ -42,10 +42,10 @@ def load_dataset(path, batch_size):
     train_dataset = ImageNetteDataset(
         path, split='train', transform=transform_train)
     train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True,
-                                  num_workers=4, pin_memory=True)
+                                  num_workers=1, pin_memory=True)
     val_dataset = ImageNetteDataset(path, split='val', transform=transform_val)
     val_dataloader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False,
-                                num_workers=4, pin_memory=True)
+                                num_workers=1, pin_memory=True)
     return train_dataloader, val_dataloader
 
 
@@ -127,7 +127,7 @@ def train(conf, device):
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=conf['TRAIN'].getfloat('LR'))
 
-    loss_hisroty, train_acc_hist, val_acc_hist = [], [], []
+    loss_history, train_acc_hist, val_acc_hist = [], [], []
     max_val_acc = 0
 
     since = time.time()
@@ -137,7 +137,7 @@ def train(conf, device):
             model, train_dataloader, optimizer, criterion, device, epoch)
         val_acc = validation_step(model, val_dataloader, device)
 
-        loss_hisroty.append(loss)
+        loss_history.append(loss)
         train_acc_hist.append(train_acc)
         val_acc_hist.append(val_acc)
 

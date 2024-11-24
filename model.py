@@ -48,7 +48,7 @@ class ViGBlock(nn.Module):
 
 
 class VGNN(nn.Module):
-    def __init__(self, in_features=3*16*16, out_feature=320, num_patches=196,
+    def __init__(self, in_features=4*16*16, out_feature=320, num_patches=196,
                  num_ViGBlocks=16, num_edges=9, head_num=1):
         super().__init__()
 
@@ -80,6 +80,35 @@ class VGNN(nn.Module):
             *[ViGBlock(out_feature, num_edges, head_num)
               for _ in range(num_ViGBlocks)])
 
+    # def forward(self, x, mask):
+    #     """
+    #     Forward pass with mask-based patch weighting.
+    #     Args:
+    #     - x: Input image tensor (B, 3, H, W)
+    #     - mask: Bounding mask tensor (B, 1, H, W)
+    #     """
+    #     # Step 1: Extract patches
+    #     patches = self.patchifier(x)  # (B, N, C, H, W)
+    #     mask_patches = self.patchifier(mask)  # (B, N, 1, H, W)
+    #
+    #     # Step 2: Calculate mask-based weights
+    #     mask_weights = mask_patches.mean(dim=(-2, -1))  # Average over H, W
+    #     mask_weights = mask_weights / (mask_weights.sum(dim=1, keepdim=True) + 1e-6)  # Normalize
+    #
+    #     # Step 3: Apply patch embedding
+    #     B, N, C, H, W = patches.shape
+    #     patches = self.patch_embedding(patches.view(B * N, -1)).view(B, N, -1)
+    #
+    #     # Step 4: Apply mask weights to patch embeddings
+    #     patches = patches * mask_weights.unsqueeze(-1)
+    #
+    #     # Step 5: Add positional embeddings
+    #     patches = patches + self.pose_embedding
+    #
+    #     # Step 6: Process through ViG blocks
+    #     patches = self.blocks(patches)
+    #
+    #     return patches
     def forward(self, x):
         x = self.patchifier(x)
         B, N, C, H, W = x.shape
@@ -92,7 +121,7 @@ class VGNN(nn.Module):
 
 
 class Classifier(nn.Module):
-    def __init__(self, in_features=3*16*16, out_feature=320,
+    def __init__(self, in_features=4*16*16, out_feature=320,
                  num_patches=196, num_ViGBlocks=16, hidden_layer=1024,
                  num_edges=9, head_num=1, n_classes=10):
         super().__init__()
@@ -106,6 +135,22 @@ class Classifier(nn.Module):
             nn.GELU(),
             nn.Linear(hidden_layer, n_classes)
         )
+
+    # def forward(self, x, mask):
+    #     """
+    #     Forward pass for classification with mask influence.
+    #     Args:
+    #     - x: Input image tensor (B, 3, H, W)
+    #     - mask: Bounding mask tensor (B, 1, H, W)
+    #     """
+    #     # Step 1: Extract features using VGNN with mask
+    #     features = self.backbone(x, mask)  # Features after patchification and graph blocks
+    #
+    #     # Step 2: Flatten features for classification
+    #     B, N, C = features.shape
+    #     x = self.predictor(features.view(B, -1))  # Classification
+    #
+    #     return features, x
 
     def forward(self, x):
         features = self.backbone(x)
